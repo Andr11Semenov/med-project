@@ -8,8 +8,6 @@
  * modules in your project's /lib directory.
  */
 var _ = require('lodash');
-
-
 /**
 	Initialises the standard view locals
 
@@ -17,12 +15,14 @@ var _ = require('lodash');
 	the navigation in the header, you may wish to change this array
 	or replace it with your own templates / logic.
 */
+
 exports.initLocals = function (req, res, next) {
 	res.locals.navLinks = [
 		{ label: 'Home', key: 'home', href: '/' },
 		{ label: 'Blog', key: 'blog', href: '/blog' },
 		{ label: 'Gallery', key: 'gallery', href: '/gallery' },
 		{ label: 'Contact', key: 'contact', href: '/contact' },
+		{ label: 'AboutAmb', key: 'about', href:'/content'}
 	];
 	res.locals.user = req.user;
 	next();

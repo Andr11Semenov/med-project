@@ -1,36 +1,47 @@
-'use strict';
+var keystone = require('keystone');
 
-var keystone = require( 'keystone' );
-
-exports = module.exports = function( req,res/*,next*/ ){
-  var view = new keystone.View( req, res ),
-    locals = res.locals;
-
+exports = module.exports = function(req, res) {
+  
+  var view = new keystone.View(req, res);
+  var locals = res.locals;
+  console.log("req.params: \n", req.params);
   // Set locals
-  locals.section = 'page';
+  locals.section = 'home';
   locals.filters = {
-    page: req.params.page
+    post: req.params.post
   };
-  locals.data = {};
-
-  // Load the current page
-  view.on( 'init', function( callback ){
-    var q = keystone.list( 'Page' ).model.findOne( {
+  locals.data = {
+    pages: []
+  };
+  
+  // Load the current post
+  view.on('init', function(next) {
+    
+    var q = keystone.list('Page').model.findOne({
       state: 'published',
-      slug: locals.filters.page
-    } ).populate( 'author' );
-
-    q.exec( function( err,
-                      result ){
-      if( !result || 0 >= result.length ){
-        return res.status( 404 )
-          .send( keystone.wrapHTMLError( 'Sorry, no page could be found at this address (404)' ) );
-      }
-      locals.data.page = result;
-      callback();
-    } );
-  } );
-
+      slug: locals.filters.post
+    }).populate('author categories');
+    
+    q.exec(function(err, result) {
+      locals.data.post = result;
+      next(err);
+    });
+    
+  });
+  
+  // Load other pages
+  view.on('init', function(next) {
+    
+    var q = keystone.list('Page').model.find().where('state', 'published').sort('-publishedDate').populate('author').limit('4');
+    
+    q.exec(function(err, results) {
+      locals.data.pages = results;
+      next(err);
+    });
+    
+  });
+  
   // Render the view
-  view.render( 'page' );
+  view.render('post');
+  
 };

@@ -1,72 +1,41 @@
-'use strict';
-
-var keystone = require( 'keystone' );
+var keystone = require('keystone');
 var Types = keystone.Field.Types;
 
-var Page = new keystone.List( 'Page' );
+/**
+ * Page Model
+ * ==========
+ */
 
-Page.defaultColumns = 'title, slug, state|20%, author, publishedDate, expose';
-var fields = {
-  name: {
-    type: String,
-    required: true,
-    initial: true,
-    note: "For administrative purposes only, to differentiate between pages with the same title."
-  },
-  title: {
-    type: String,
-    required: true,
-    initial: true
-  },
-  slug: {
-    type: String,
-    index: true,
-    unique: true,
-    note: "Warning: modifying this will affect the URL it's shown on."
-  },
-  state: {
-    type: Types.Select,
-    options: 'draft, published, archived',
-    default: 'draft',
-    index: true
-  },
-  author: {
-    type: Types.Relationship,
-    ref: 'User',
-    index: true
-  },
-  publishedDate: {
-    type: Types.Date,
-    index: true
-  },
-  body: {
-    type: Types.Html,
-    wysiwyg: true,
-    height: 400
-  },
-  expose: {
-    type: Types.Select,
-    options: [
-      {
-        value: "api",
-        label: "api"
-      },
-      {
-        value: "cms",
-        label: "cms"
-      },
-      {
-        value: "both",
-        label: "both"
-      }
-    ],
-    default: "cms",
-    label: "Allow acces in"
-  }
-};
+var Page = new keystone.List('Page', {
+  map: { name: 'url'},
+  autokey: { path: 'slug', from: 'url', unique: true }
+});
 
-require( './helpers/setupList' )( Page )
-  .set('idField', 'slug')
-  .add( fields )
-  .retain( "_id", "name", "expose" )
-  .register();
+Page.add({
+  title: { type: String, require:true, initial:true},
+  url:{ type:String, require:true, initial:true, note: "Warning: modifying this will affect the URL it's shown on."},
+
+  state: { type: Types.Select, options: 'draft, published, archived', default: 'draft', index: true },
+  author: { type: Types.Relationship, ref: 'User', index: true },
+  publishedDate: { type: Types.Date, index: true, dependsOn: { state: 'published' } },
+  section: { type: Types.Select, options: 'page, about, contact, what-we-do', default: 'page'},
+
+  //ABOUT 
+  aboutSomeField: { type: String, dependsOn: { template: 'about' } },
+
+  // TEAM
+  teamSomeField: { type: String, dependsOn: { template: 'team' } },
+
+  content: {
+    
+    extended: { type: Types.Html, wysiwyg: true, height: 400 }
+  },  
+
+});
+
+Page.schema.virtual('content.full').get(function() {
+  return this.content.extended;
+});
+
+Page.defaultColumns = 'url|20%, title, state|20%, author|20%, publishedDate|20%';
+Page.register();
